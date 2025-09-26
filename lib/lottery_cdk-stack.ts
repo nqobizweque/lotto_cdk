@@ -11,12 +11,15 @@ export class LotteryCdkStack extends cdk.Stack {
     const lottoFunction = new lambda.Function(this, 'NationalLottery', {
       runtime: lambda.Runtime.RUBY_3_2,
       handler: 'lambda_function.lambda_handler',
+      functionName: 'NationalLottery',
       code: lambda.Code.fromAsset(process.env.LOTTO_ZIP_PATH!),
       environment: {
         GMAIL_USERNAME: process.env.GMAIL_USERNAME!,
         GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD!,
         GMAIL_FROM: process.env.GMAIL_FROM!,
-        GMAIL_TO: process.env.GMAIL_TO!
+        GMAIL_TO: process.env.GMAIL_TO!,
+        MAIL_SMTP_SSL_ENABLE: 'true',
+        MAIL_SMTP_PORT: '465'
       }
     });
 
