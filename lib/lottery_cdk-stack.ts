@@ -10,10 +10,32 @@ export class LotteryCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const sesIdentity = ses.EmailIdentity.fromEmailIdentityName(
+      this, 
+      'SESIdentity', 
+      'simplepropertysys@gmail.com'
+    )
+
+    const lotteryRole = new iam.Role(this, 'LotteryPyRole', {
+      roleName: 'LotteryPyRole',
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')
+      ],
+    });
+
+    lotteryRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+        resources: [sesIdentity.emailIdentityArn],
+      })
+    );
+
     const lottoFunction = new lambda.Function(this, 'LotteryPy', {
       functionName: 'LotteryPy',
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: 'generate_insight.lambda_handler',
+      role: lotteryRole,
       code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda'), {
         exclude: ['**', '!generate_insight.py'],
       }),
@@ -24,20 +46,8 @@ export class LotteryCdkStack extends cdk.Stack {
       timeout: cdk.Duration.minutes(5),
     });
 
-    const sesIdentity = ses.EmailIdentity.fromEmailIdentityName(
-      this,
-      'SESIdentity',
-      'simplepropertysys@gmail.com'
-    );
-
-    lottoFunction.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ['ses:SendEmail', 'ses:SendRawEmail'],
-        resources: ['arn:aws:ses:af-south-1:490253922843:identity/simplepropertysys@gmail.com'],
-      })
-    );
-
-    const powerballSchedulerRole = new iam.Role(this, 'PowerballSchedulerRole', {
+    const powerballSchedulerRole = new iam.Role(this, 'LotterySchedulerRole', {
+      roleName: 'LotterySchedulerRole',
       assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
     });
 
@@ -45,8 +55,8 @@ export class LotteryCdkStack extends cdk.Stack {
 
     new scheduler.CfnSchedule(this, 'PowerballSchedule', {
       name: 'PowerballSchedule',
-      flexibleTimeWindow: { mode: 'ON', maximumWindowInMinutes: 5 },
-      scheduleExpression: 'cron(20 20 ? * 3,6 *)',
+      flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
+      scheduleExpression: 'cron(20 20 ? * TUE,FRI *)',
       target: {
         arn: lottoFunction.functionArn,
         roleArn: powerballSchedulerRole.roleArn,

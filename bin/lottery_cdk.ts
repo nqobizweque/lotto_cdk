@@ -3,6 +3,6 @@ import * as cdk from 'aws-cdk-lib';
 import { LotteryCdkStack } from '../lib/lottery_cdk-stack';
 
 const app = new cdk.App();
-new LotteryCdkStack(app, 'LotteryCdkStack', {
+new LotteryCdkStack(app, 'LotteryStack', {
   env: { region: 'af-south-1' }
 });
