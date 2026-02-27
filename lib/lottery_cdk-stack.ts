@@ -1,40 +1,57 @@
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as events from 'aws-cdk-lib/aws-events';
-import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as ses from 'aws-cdk-lib/aws-ses';
+import * as scheduler from 'aws-cdk-lib/aws-scheduler';
+import * as path from 'path';
 import { Construct } from 'constructs';
 
 export class LotteryCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const lottoFunction = new lambda.Function(this, 'NationalLottery', {
-      runtime: lambda.Runtime.RUBY_3_2,
-      handler: 'lambda_function.lambda_handler',
-      functionName: 'NationalLottery',
-      code: lambda.Code.fromAsset(process.env.LOTTO_ZIP_PATH!),
+    const lottoFunction = new lambda.Function(this, 'LotteryPy', {
+      functionName: 'LotteryPy',
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: 'generate_insight.lambda_handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda'), {
+        exclude: ['**', '!generate_insight.py'],
+      }),
       environment: {
-        GMAIL_USERNAME: process.env.GMAIL_USERNAME!,
-        GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD!,
         GMAIL_FROM: process.env.GMAIL_FROM!,
         GMAIL_TO: process.env.GMAIL_TO!,
-        MAIL_SMTP_SSL_ENABLE: 'true',
-        MAIL_SMTP_PORT: '465'
-      }
+      },
+      timeout: cdk.Duration.minutes(5),
     });
 
-    new events.Rule(this, 'PowerballSchedule', {
-      schedule: events.Schedule.cron({ minute: '20', hour: '20', weekDay: 'TUE,FRI' }),
-      targets: [new targets.LambdaFunction(lottoFunction, {
-        event: events.RuleTargetInput.fromObject({ type: 'powerball', nob: 2 })
-      })]
+    const sesIdentity = ses.EmailIdentity.fromEmailIdentityName(
+      this,
+      'SESIdentity',
+      'simplepropertysys@gmail.com'
+    );
+
+    lottoFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+        resources: ['arn:aws:ses:af-south-1:490253922843:identity/simplepropertysys@gmail.com'],
+      })
+    );
+
+    const powerballSchedulerRole = new iam.Role(this, 'PowerballSchedulerRole', {
+      assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
     });
 
-    new events.Rule(this, 'LottoWedSchedule', {
-      schedule: events.Schedule.cron({ minute: '20', hour: '20', weekDay: 'WED,SAT' }),
-      targets: [new targets.LambdaFunction(lottoFunction, {
-        event: events.RuleTargetInput.fromObject({ type: 'lotto', nob: 2 })
-      })]
+    lottoFunction.grantInvoke(powerballSchedulerRole);
+
+    new scheduler.CfnSchedule(this, 'PowerballSchedule', {
+      name: 'PowerballSchedule',
+      flexibleTimeWindow: { mode: 'ON', maximumWindowInMinutes: 5 },
+      scheduleExpression: 'cron(20 20 ? * 3,6 *)',
+      target: {
+        arn: lottoFunction.functionArn,
+        roleArn: powerballSchedulerRole.roleArn,
+        input: JSON.stringify({"games": [ {"lotteryType": "powerball", "boardCount": 2} , {"lotteryType": "daily", "boardCount": 2}], "sendMail": true}),
+      },
     });
   }
 }
