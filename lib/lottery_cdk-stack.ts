@@ -26,7 +26,7 @@ export class LotteryCdkStack extends cdk.Stack {
 
     lotteryRole.addToPolicy(
       new iam.PolicyStatement({
-        actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+        actions: ['ses:SendEmail', 'ses:ListEmailIdentities'],
         resources: [sesIdentity.emailIdentityArn],
       })
     );
@@ -36,12 +36,11 @@ export class LotteryCdkStack extends cdk.Stack {
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: 'generate_insight.lambda_handler',
       role: lotteryRole,
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda'), {
+      code: lambda.Code.fromAsset(path.join(__dirname, process.env.LAMBDA_PATH!), {
         exclude: ['**', '!generate_insight.py'],
       }),
       environment: {
-        GMAIL_FROM: process.env.GMAIL_FROM!,
-        GMAIL_TO: process.env.GMAIL_TO!,
+        GMAIL_FROM: process.env.GMAIL_FROM!
       },
       timeout: cdk.Duration.minutes(5),
     });
@@ -61,6 +60,17 @@ export class LotteryCdkStack extends cdk.Stack {
         arn: lottoFunction.functionArn,
         roleArn: powerballSchedulerRole.roleArn,
         input: JSON.stringify({"games": [ {"lotteryType": "powerball", "boardCount": 2} , {"lotteryType": "daily", "boardCount": 2}], "sendMail": true}),
+      },
+    });
+
+    new scheduler.CfnSchedule(this, 'LottoSchedule', {
+      name: 'LottoSchedule',
+      flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
+      scheduleExpression: 'cron(20 20 ? * WED,SAT *)',
+      target: {
+        arn: lottoFunction.functionArn,
+        roleArn: powerballSchedulerRole.roleArn,
+        input: JSON.stringify({"games": [ {"lotteryType": "lotto", "boardCount": 2} , {"lotteryType": "daily", "boardCount": 2}], "sendMail": true}),
       },
     });
   }
