@@ -26,11 +26,16 @@ export class LotteryCdkStack extends cdk.Stack {
 
     lotteryRole.addToPolicy(
       new iam.PolicyStatement({
-        actions: ['ses:SendEmail', 'ses:ListEmailIdentities'],
+        actions: ['ses:SendEmail'],
         resources: [sesIdentity.emailIdentityArn],
       })
     );
-
+    lotteryRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ['ses:ListEmailIdentities', 'ses:GetEmailIdentity'],
+        resources: ['*'],
+      })
+    );
     const lottoFunction = new lambda.Function(this, 'LotteryPy', {
       functionName: 'LotteryPy',
       runtime: lambda.Runtime.PYTHON_3_12,
