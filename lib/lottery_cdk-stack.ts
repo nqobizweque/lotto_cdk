@@ -24,10 +24,15 @@ export class LotteryCdkStack extends cdk.Stack {
       ],
     });
 
+    const zaLottingIdentityEmail = 'zalotting@outlook.com'
+    const zaLottingIdentity = new ses.EmailIdentity(this, 'OutlookIdentity', {
+      identity: ses.Identity.email(zaLottingIdentityEmail),
+    });
+
     lotteryRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ['ses:SendEmail'],
-        resources: [sesIdentity.emailIdentityArn],
+        resources: [sesIdentity.emailIdentityArn, zaLottingIdentity.emailIdentityArn],
       })
     );
     lotteryRole.addToPolicy(
@@ -45,7 +50,8 @@ export class LotteryCdkStack extends cdk.Stack {
         exclude: ['**', '!generate_insight.py'],
       }),
       environment: {
-        GMAIL_FROM: process.env.GMAIL_FROM!
+        GMAIL_FROM: process.env.GMAIL_FROM!,
+        SENDER_EMAIL: zaLottingIdentityEmail
       },
       timeout: cdk.Duration.minutes(5),
     });
