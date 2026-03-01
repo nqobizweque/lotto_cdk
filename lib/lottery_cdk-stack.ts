@@ -63,8 +63,10 @@ export class LotteryCdkStack extends cdk.Stack {
 
     lottoFunction.grantInvoke(powerballSchedulerRole);
 
+    const scheduleExpressionTimezone = 'Africa/Johannesburg';
     new scheduler.CfnSchedule(this, 'DailyOnlySchedule', {
       name: 'DailyOnlySchedule',
+      scheduleExpressionTimezone,
       flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
       scheduleExpression: 'cron(20 20 ? * MON,THU,SUN *)',
       target: {
@@ -76,6 +78,7 @@ export class LotteryCdkStack extends cdk.Stack {
 
     new scheduler.CfnSchedule(this, 'PowerballDailySchedule', {
       name: 'PowerballDailySchedule',
+      scheduleExpressionTimezone,
       flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
       scheduleExpression: 'cron(20 20 ? * TUE,FRI *)',
       target: {
@@ -87,6 +90,7 @@ export class LotteryCdkStack extends cdk.Stack {
 
     new scheduler.CfnSchedule(this, 'PowerballOnlySchedule', {
       name: 'PowerballOnlySchedule',
+      scheduleExpressionTimezone,
       flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
       scheduleExpression: 'cron(20 20 ? * TUE,FRI *)',
       target: {
@@ -98,6 +102,7 @@ export class LotteryCdkStack extends cdk.Stack {
 
     new scheduler.CfnSchedule(this, 'DailyNoPowerballSchedule', {
       name: 'DailyNoPowerballSchedule',
+      scheduleExpressionTimezone,
       flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
       scheduleExpression: 'cron(20 20 ? * TUE,FRI *)',
       target: {
@@ -109,6 +114,7 @@ export class LotteryCdkStack extends cdk.Stack {
 
     new scheduler.CfnSchedule(this, 'LottoDailySchedule', {
       name: 'LottoDailySchedule',
+      scheduleExpressionTimezone,
       flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
       scheduleExpression: 'cron(20 20 ? * WED,SAT *)',
       target: {
@@ -120,6 +126,7 @@ export class LotteryCdkStack extends cdk.Stack {
 
     new scheduler.CfnSchedule(this, 'LottoOnlySchedule', {
       name: 'LottoOnlySchedule',
+      scheduleExpressionTimezone,
       flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
       scheduleExpression: 'cron(20 20 ? * WED,SAT *)',
       target: {
@@ -131,6 +138,7 @@ export class LotteryCdkStack extends cdk.Stack {
 
     new scheduler.CfnSchedule(this, 'DailyNoLottoSchedule', {
       name: 'DailyNoLottoSchedule',
+      scheduleExpressionTimezone,
       flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
       scheduleExpression: 'cron(20 20 ? * WED,SAT *)',
       target: {
