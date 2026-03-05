@@ -64,87 +64,15 @@ export class LotteryCdkStack extends cdk.Stack {
     lottoFunction.grantInvoke(powerballSchedulerRole);
 
     const scheduleExpressionTimezone = 'Africa/Johannesburg';
-    new scheduler.CfnSchedule(this, 'DailyOnlySchedule', {
-      name: 'DailyOnlySchedule',
+    new scheduler.CfnSchedule(this, 'DefaultSchedule', {
+      name: 'DefaultSchedule',
       scheduleExpressionTimezone,
       flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
-      scheduleExpression: 'cron(20 20 ? * MON,THU,SUN *)',
+      scheduleExpression: 'cron(20 10 ? * * *)',
       target: {
         arn: lottoFunction.functionArn,
         roleArn: powerballSchedulerRole.roleArn,
-        input: JSON.stringify({"games": [{"lotteryType": "daily", "boardCount": 3}], "sendMail": true}),
-      },
-    });
-
-    new scheduler.CfnSchedule(this, 'PowerballDailySchedule', {
-      name: 'PowerballDailySchedule',
-      scheduleExpressionTimezone,
-      flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
-      scheduleExpression: 'cron(20 20 ? * TUE,FRI *)',
-      target: {
-        arn: lottoFunction.functionArn,
-        roleArn: powerballSchedulerRole.roleArn,
-        input: JSON.stringify({"games": [ {"lotteryType": "powerball", "boardCount": 3} , {"lotteryType": "daily", "boardCount": 3}], "sendMail": true}),
-      },
-    });
-
-    new scheduler.CfnSchedule(this, 'PowerballOnlySchedule', {
-      name: 'PowerballOnlySchedule',
-      scheduleExpressionTimezone,
-      flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
-      scheduleExpression: 'cron(20 20 ? * TUE,FRI *)',
-      target: {
-        arn: lottoFunction.functionArn,
-        roleArn: powerballSchedulerRole.roleArn,
-        input: JSON.stringify({"games": [ {"lotteryType": "powerball", "boardCount": 3}], "sendMail": true, "excludeTypes": ["daily"]}),
-      },
-    });
-
-    new scheduler.CfnSchedule(this, 'DailyNoPowerballSchedule', {
-      name: 'DailyNoPowerballSchedule',
-      scheduleExpressionTimezone,
-      flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
-      scheduleExpression: 'cron(20 20 ? * TUE,FRI *)',
-      target: {
-        arn: lottoFunction.functionArn,
-        roleArn: powerballSchedulerRole.roleArn,
-        input: JSON.stringify({"games": [ {"lotteryType": "daily", "boardCount": 3}], "sendMail": true, "excludeTypes": ["powerball"] }),
-      },
-    });
-
-    new scheduler.CfnSchedule(this, 'LottoDailySchedule', {
-      name: 'LottoDailySchedule',
-      scheduleExpressionTimezone,
-      flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
-      scheduleExpression: 'cron(20 20 ? * WED,SAT *)',
-      target: {
-        arn: lottoFunction.functionArn,
-        roleArn: powerballSchedulerRole.roleArn,
-        input: JSON.stringify({"games": [ {"lotteryType": "lotto", "boardCount": 3} , {"lotteryType": "daily", "boardCount": 3}], "sendMail": true}),
-      },
-    });
-
-    new scheduler.CfnSchedule(this, 'LottoOnlySchedule', {
-      name: 'LottoOnlySchedule',
-      scheduleExpressionTimezone,
-      flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
-      scheduleExpression: 'cron(20 20 ? * WED,SAT *)',
-      target: {
-        arn: lottoFunction.functionArn,
-        roleArn: powerballSchedulerRole.roleArn,
-        input: JSON.stringify({"games": [ {"lotteryType": "lotto", "boardCount": 3}], "sendMail": true, "excludeTypes": ["daily"]}),
-      },
-    });
-
-    new scheduler.CfnSchedule(this, 'DailyNoLottoSchedule', {
-      name: 'DailyNoLottoSchedule',
-      scheduleExpressionTimezone,
-      flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
-      scheduleExpression: 'cron(20 20 ? * WED,SAT *)',
-      target: {
-        arn: lottoFunction.functionArn,
-        roleArn: powerballSchedulerRole.roleArn,
-        input: JSON.stringify({"games": [ {"lotteryType": "daily", "boardCount": 3}], "sendMail": true, "excludeTypes": ["lotto"]}),
+        input: JSON.stringify({"sendMail": true}),
       },
     });
   }
