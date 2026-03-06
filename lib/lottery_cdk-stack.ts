@@ -68,7 +68,7 @@ export class LotteryCdkStack extends cdk.Stack {
       name: 'DefaultSchedule',
       scheduleExpressionTimezone,
       flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
-      scheduleExpression: 'cron(20 10 ? * * *)',
+      scheduleExpression: 'cron(10 20 ? * * *)',
       target: {
         arn: lottoFunction.functionArn,
         roleArn: powerballSchedulerRole.roleArn,
