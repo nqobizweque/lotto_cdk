@@ -24,9 +24,8 @@ export class LotteryCdkStack extends cdk.Stack {
       ],
     });
 
-    const zaLottingIdentityEmail = 'zalotting@outlook.com'
     const zaLottingIdentity = new ses.EmailIdentity(this, 'OutlookIdentity', {
-      identity: ses.Identity.email(zaLottingIdentityEmail),
+      identity: ses.Identity.email(process.env.SENDER_EMAIL!),
     });
 
     lotteryRole.addToPolicy(
@@ -50,8 +49,8 @@ export class LotteryCdkStack extends cdk.Stack {
         exclude: ['**', '!generate_insight.py'],
       }),
       environment: {
-        GMAIL_FROM: process.env.GMAIL_FROM!,
-        SENDER_EMAIL: zaLottingIdentityEmail
+        SENDER_EMAIL: process.env.SENDER_EMAIL!,
+        TIME_ZONE: process.env.TIME_ZONE!
       },
       timeout: cdk.Duration.minutes(5),
     });
@@ -63,10 +62,9 @@ export class LotteryCdkStack extends cdk.Stack {
 
     lottoFunction.grantInvoke(powerballSchedulerRole);
 
-    const scheduleExpressionTimezone = 'Africa/Johannesburg';
-    new scheduler.CfnSchedule(this, 'DefaultSchedule', {
-      name: 'DefaultSchedule',
-      scheduleExpressionTimezone,
+    new scheduler.CfnSchedule(this, 'DefaultLotterySchedule', {
+      name: 'DefaultLotterySchedule',
+      scheduleExpressionTimezone: process.env.TIME_ZONE!,
       flexibleTimeWindow: { mode: 'FLEXIBLE', maximumWindowInMinutes: 5 },
       scheduleExpression: 'cron(10 20 ? * * *)',
       target: {
